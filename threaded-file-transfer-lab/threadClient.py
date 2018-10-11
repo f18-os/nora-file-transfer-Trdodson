@@ -11,10 +11,10 @@ switchesVarDefaults = (
     (('-s', '--server'), 'server', "localhost:50001"),
     (('-d', '--debug'), "debug", False), # boolean (set if present)
     (('-?', '--usage'), "usage", False),
-    ('-f', '--file'), 'file', "default.txt"), # File parameter.
+    (('-f', '--file'), 'file', "default.txt"), # File parameter.
     )
 
-progname = "threadedClient"
+progname = "threadClient"
 paramMap = params.parseParams(switchesVarDefaults)
 
 server, usage, debug, fileName = paramMap["server"], paramMap["usage"], paramMap["debug"], paramMap["file"]
@@ -59,14 +59,27 @@ class ClientThread(Thread):
            print('could not open socket')
            sys.exit(1)
 
-       fs = FramedStreamSock(s, debug=debug)
+       print("Success! Trying to open %s" % fileName)
+       
+       try:
+           try:
+               myFile = open(fileName, 'rb')
+           except FileNotFoundError:
+               print("ERROR: File doesn't exist.")
+               s.close()
+               exit()
 
-       print("sending hello world")
-       fs.sendmsg(b"hello world")
-       print("received:", fs.receivemsg())
+           fs = FramedStreamSock(s, debug=debug)  #Use framedSock class.
 
-       fs.sendmsg(b"hello world")
-       print("received:", fs.receivemsg())
+           print("sending %s" % fileName)
+           
+           line = myFile.read(100)
+           fs.sendmsg(line)
+           print("received:", fs.receivemsg())
+           myFile.close()
+       except:
+           print("ERROR: Broke connection. Exiting...")
+           exit()
 
-for i in range(5):
+for i in range(1):
     ClientThread(serverHost, serverPort, debug)

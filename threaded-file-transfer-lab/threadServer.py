@@ -9,7 +9,7 @@ switchesVarDefaults = (
     (('-?', '--usage'), "usage", False), # boolean (set if present)
     )
 
-progname = "echoserver"
+progname = "threadServer"
 paramMap = params.parseParams(switchesVarDefaults)
 
 debug, listenPort = paramMap['debug'], paramMap['listenPort']
