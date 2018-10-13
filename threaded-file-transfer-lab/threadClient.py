@@ -70,16 +70,21 @@ class ClientThread(Thread):
                exit()
 
            fs = FramedStreamSock(s, debug=debug)  #Use framedSock class.
+           fs.sendmsg(fileName.encode())
+           fs.sendmsg(b"")
 
+           
            print("sending %s" % fileName)
            
            line = myFile.read(100)
-           fs.sendmsg(line)
-           print("received:", fs.receivemsg())
+           while(line):
+               fs.sendmsg(line)
+               line = myFile.read(100)
            myFile.close()
+           print("%s sent." % fileName)
        except:
            print("ERROR: Broke connection. Exiting...")
            exit()
 
-for i in range(1):
+for i in range(100):
     ClientThread(serverHost, serverPort, debug)

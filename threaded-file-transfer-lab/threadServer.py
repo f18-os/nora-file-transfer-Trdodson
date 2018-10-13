@@ -29,19 +29,35 @@ class ServerThread(Thread):
         Thread.__init__(self, daemon=True)
         self.fsock, self.debug = FramedStreamSock(sock, debug), debug
         self.start()
+        
     def run(self):
-        while True:
+
+        fileName = "default"
+        msg = self.fsock.receivemsg()  # First receive gets file name.
+        
+        while(msg != b""):             # Recieve filename and stop when client sends an empty array.
+            fileName = msg.decode("utf-8")
+            msg = self.fsock.receivemsg()
+            
+        filePath = os.getcwd() + "/server/" + fileName #Build path for file.
+        
+        myFile = open(filePath, 'wb')
+        
+        while True:                    # Write to file until there is nothing to recieve!
             msg = self.fsock.receivemsg()
             if not msg:
                 if self.debug: print(self.fsock, "server thread done")
+                myFile.close()
                 return
+            myFile.write(msg)
+            
             requestNum = ServerThread.requestCount
             time.sleep(0.001)
             ServerThread.requestCount = requestNum + 1
             msg = ("%s! (%d)" % (msg, requestNum)).encode()
-            self.fsock.sendmsg(msg)
 
 
 while True:
     sock, addr = lsock.accept()
+    print("Connection recieved from:", addr)
     ServerThread(sock, debug)
