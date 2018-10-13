@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-# Echo client program
+# Client file transfer program. Based on emphaticDemo: see COLLABORATIONS for details.
 import socket, sys, re
 import params
 from framedSock import FramedStreamSock

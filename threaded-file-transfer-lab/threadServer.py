@@ -1,4 +1,6 @@
 #! /usr/bin/env python3
+
+# Client file transfer program. Based on emphaticDemo: see COLLABORATIONS for details.
 import sys, os, socket, params, time
 from threading import Thread
 from framedSock import FramedStreamSock
