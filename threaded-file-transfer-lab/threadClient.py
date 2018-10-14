@@ -62,23 +62,25 @@ class ClientThread(Thread):
        print("Success! Trying to open %s" % fileName)
        
        try:
+           fs = FramedStreamSock(s, debug=debug)  #Use framedSock class.
            try:
                myFile = open(fileName, 'rb')
            except FileNotFoundError:
-               print("ERROR: File doesn't exist.")
+               print("ERROR: File doesn't exist. Stopping...")
+               fs.sendmsg(b"error") # Send Error if file doesn't exist.
                s.close()
                exit()
 
-           fs = FramedStreamSock(s, debug=debug)  #Use framedSock class.
-           fs.sendmsg(fileName.encode())
-           fs.sendmsg(b"")
-
+           fs.sendmsg(b"accept")    # Send an accept if everything is fine!
+        
+           fs.sendmsg(fileName.encode()) # Send file name.
+           fs.sendmsg(b"") # Send this so they know they got it all!
            
            print("sending %s" % fileName)
            
-           line = myFile.read(100)
+           line = myFile.read(100)  # Start reading from the file.
            while(line):
-               fs.sendmsg(line)
+               fs.sendmsg(line)    # Send file line by line.
                line = myFile.read(100)
            myFile.close()
            print("%s sent." % fileName)
@@ -86,5 +88,5 @@ class ClientThread(Thread):
            print("ERROR: Broke connection. Exiting...")
            exit()
 
-for i in range(100):
+for i in range(2):
     ClientThread(serverHost, serverPort, debug)

@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-# Client file transfer program. Based on emphaticDemo: see COLLABORATIONS for details.
+# Server file transfer program. Based on emphaticDemo: see COLLABORATIONS for details.
 import sys, os, socket, params, time
 from threading import Thread
 from framedSock import FramedStreamSock
@@ -33,18 +33,21 @@ class ServerThread(Thread):
         self.start()
         
     def run(self):
-
-        fileName = "default"
-        msg = self.fsock.receivemsg()  # First receive gets file name.
         
+        msg = self.fsock.receivemsg()  # First receive checks for error.
+
+        if (msg == b"error"): # If you get an error message, stop!
+            print("Something went wrong client-side. Stopping...")
+            return
+        
+        msg = self.fsock.receivemsg()  # Second receive checks for file name!
         while(msg != b""):             # Recieve filename and stop when client sends an empty array.
             fileName = msg.decode("utf-8")
             msg = self.fsock.receivemsg()
             
         filePath = os.getcwd() + "/server/" + fileName #Build path for file.
-        
         myFile = open(filePath, 'wb')
-        
+
         while True:                    # Write to file until there is nothing to recieve!
             msg = self.fsock.receivemsg()
             if not msg:
