@@ -88,5 +88,5 @@ class ClientThread(Thread):
            print("ERROR: Broke connection. Exiting...")
            exit()
 
-for i in range(2):
+for i in range(1):
     ClientThread(serverHost, serverPort, debug)
