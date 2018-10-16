@@ -34,11 +34,7 @@ class ServerThread(Thread):
         self.start()
         
     def run(self):
-        
-        if debug: print(self.fsock, "Waiting for lock.")
-        
-        self.lock.acquire()  # We want whatever thread gets here first to claim the file.
-        if debug: print(self.fsock, "Lock acquired.")
+
         msg = self.fsock.receivemsg()  # First receive checks for error.
 
         if (msg == b"error"): # If you get an error message, stop!
@@ -52,10 +48,15 @@ class ServerThread(Thread):
             
         filePath = os.getcwd() + "/server/" + fileName #Build path for file.
 
-        if os.path.isfile(filePath): # Don't allow overwrite of an already-existing file.
-            print(self.fsock, "file already exists! Stopping.")
+        if debug: print(self.fsock, "Waiting for lock.")
+        self.lock.acquire()  # We want whatever thread gets here first to claim the file.
+        if debug: print(self.fsock, "Lock acquired.")
+        
+        if os.path.isfile(filePath): # Don't allow overwrite of an already-existing file. This is meant to handle race condition.
+            print(self.fsock, ": file already exists! Stopping.")
             self.lock.release() # Let go of the lock if you're done!
             if debug: print (self.fsock, "lock released.")
+            self.fsock.sock.close()
             return
         
         myFile = open(filePath, 'wb')
@@ -67,6 +68,7 @@ class ServerThread(Thread):
             if not msg:
                 if self.debug: print(self.fsock, "server thread done")
                 myFile.close()
+                print(self.fsock, ": %s recieved." % fileName)
                 return
             myFile.write(msg)
             
