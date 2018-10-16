@@ -16,6 +16,8 @@ switchesVarDefaults = (
     )
 
 progname = "threadClient"
+
+#Parse parameters.
 paramMap = params.parseParams(switchesVarDefaults)
 
 server, usage, debug, fileName, dstName = paramMap["server"], paramMap["usage"], paramMap["debug"], paramMap["file"], paramMap["destination"]
@@ -62,13 +64,13 @@ class ClientThread(Thread):
            print('could not open socket')
            sys.exit(1)
 
-       # Once socket is open, we begin.
+       # Once socket is open, we begin with the file.
        print("Success! Trying to open %s" % fileName)
        
        try:
-           fs = FramedStreamSock(s, debug=debug)  #Use framedSock class.
+           fs = FramedStreamSock(s, debug=debug)  #Use framedSock class for socket management.
            try:
-               myFile = open(fileName, 'rb')
+               myFile = open(fileName, 'rb') # Try to open the file.
            except FileNotFoundError:
                print("ERROR: File doesn't exist. Stopping...")
                fs.sendmsg(b"error") # Send Error if file doesn't exist.
@@ -83,6 +85,12 @@ class ClientThread(Thread):
                fs.sendmsg(fileName.encode()) # Send file name.
         
            fs.sendmsg(b"") # Send this so they know they got it all!
+
+           # if (fs.recievemsg() == b"exists"):
+           #     print("Server rejected file. Exiting...")
+           #     myFile.close()
+           #     s.close()
+           #     exit(1)
            
            print("sending %s" % fileName)
            

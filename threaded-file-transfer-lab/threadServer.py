@@ -12,6 +12,8 @@ switchesVarDefaults = (
     )
 
 progname = "threadServer"
+
+#Parse out parameters. From framedThreadServer.py
 paramMap = params.parseParams(switchesVarDefaults)
 
 debug, listenPort = paramMap['debug'], paramMap['listenPort']
@@ -30,7 +32,7 @@ class ServerThread(Thread):
     def __init__(self, sock, debug):
         Thread.__init__(self, daemon=True)
         self.fsock, self.debug = FramedStreamSock(sock, debug), debug
-        self.lock = threading.Lock()
+        self.lock = threading.Lock() # Here's our lock!
         self.start()
         
     def run(self):
@@ -39,6 +41,7 @@ class ServerThread(Thread):
 
         if (msg == b"error"): # If you get an error message, stop!
             print("Something went wrong client-side. Stopping...")
+            self.fsock.sock.close()
             return
         
         msg = self.fsock.receivemsg()  # Second receive checks for file name!
@@ -55,12 +58,13 @@ class ServerThread(Thread):
         if os.path.isfile(filePath): # Don't allow overwrite of an already-existing file. This is meant to handle race condition.
             print(self.fsock, ": file already exists! Stopping.")
             self.lock.release() # Let go of the lock if you're done!
+            #self.fsock.sendmsg(b"exists") #Supposed to let client know the file exists already. Always "none" for some reason.
             if debug: print (self.fsock, "lock released.")
             self.fsock.sock.close()
             return
         
         myFile = open(filePath, 'wb')
-        self.lock.release() # First one here has claimed the file - let the other threads come through.
+        self.lock.release() # First one here has claimed the file name - let the other threads come through.
         if debug: print(self.fsock, "relased lock.")
 
         while True:                    # Write to file until there is nothing to recieve!
@@ -69,15 +73,11 @@ class ServerThread(Thread):
                 if self.debug: print(self.fsock, "server thread done")
                 myFile.close()
                 print(self.fsock, ": %s recieved." % fileName)
+                self.fsock.sock.close()
                 return
             myFile.write(msg)
             
-            requestNum = ServerThread.requestCount
-            time.sleep(0.001)
-            ServerThread.requestCount = requestNum + 1
-            msg = ("%s! (%d)" % (msg, requestNum)).encode()
-
 while True:
     sock, addr = lsock.accept()
-    print("Connection recieved from:", addr)
+    print("Connection recieved from: ", addr)
     ServerThread(sock, debug)
